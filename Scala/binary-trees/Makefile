@@ -3,13 +3,13 @@ compile:
 	
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala binaryTrees 21" Scala binary-trees
+	sudo ../../RAPL/main "/usr/bin/scala BinaryTrees 21" Scala binary-trees
 
 run:
-	/usr/bin/scala binaryTrees 21
+	/usr/bin/scala BinaryTrees 21
 
 mem:
-	/usr/bin/time -v/usr/bin/scala binaryTrees 21
+	/usr/bin/time -v /usr/bin/scala BinaryTrees 21
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala binaryTrees 21
+	valgrind --tool=massif --stacks=yes /usr/bin/scala BinaryTrees 21
