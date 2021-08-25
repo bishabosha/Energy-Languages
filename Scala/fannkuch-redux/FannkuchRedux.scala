@@ -67,7 +67,7 @@ object FannkuchRedux {
             tmp(firstValue) = firstValue
             prev
           }
-          if(firstValue > 2){
+          if (firstValue > 2) {
             // Reverse elements up to firstValue
             var idx = 1
             while (idx <= firstValue / 2) {

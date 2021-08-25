@@ -13,3 +13,6 @@ mem:
 
 valgrind:
 	valgrind --tool=massif --stacks=yes /usr/bin/scala BinaryTrees 21
+
+clean:
+	rm -rf *.class *.tasty
