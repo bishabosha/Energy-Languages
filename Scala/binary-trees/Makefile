@@ -6,17 +6,20 @@ output =
 
 # Config
 mode = 
-# #Filenames
+configName = Scala
+
+# Filenames
 fast      = BinaryTrees.scala
 idiomatic = BinaryTrees.scala
+
 default   = ${fast}
 filename  = ${default}
 
+# Environment
 scalaPath  = /usr/bin/scala
 scalacPath = /usr/bin/scalac
 
-# Logic
-
+# Logic (do not edit)
 ifeq ($(mode),idiomatic)
   	filename=${idiomatic}
 endif
@@ -26,7 +29,7 @@ compile:
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" ${configName} ${benchmarkName}
 
 run:
 	${scalaPath} ${mainClass} ${input} ${output}
@@ -39,4 +42,3 @@ valgrind:
 
 clean:
 	rm -rf *.class *.tasty
- 

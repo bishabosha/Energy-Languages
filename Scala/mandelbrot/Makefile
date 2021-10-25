@@ -1,23 +1,25 @@
 # Info
-benchmarkName = mand
-      #cmd = 'ls -la'elbrot
+benchmarkName = mandelbrot
 mainClass = mandelbrot
 input = 16000
 output = 
 
 # Config
 mode = 
-# #Filenames
+configName = Scala
+
+# Filenames
 fast      = mandelbrot.scala
 idiomatic = mandelbrot_idiomatic.scala
+
 default   = ${fast}
 filename  = ${default}
 
+# Environment
 scalaPath  = /usr/bin/scala
 scalacPath = /usr/bin/scalac
 
-# Logic
-
+# Logic (do not edit)
 ifeq ($(mode),idiomatic)
   	filename=${idiomatic}
 endif
@@ -27,7 +29,7 @@ compile:
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" ${configName} ${benchmarkName}
 
 run:
 	${scalaPath} ${mainClass} ${input} ${output}
@@ -40,4 +42,3 @@ valgrind:
 
 clean:
 	rm -rf *.class *.tasty
- 
