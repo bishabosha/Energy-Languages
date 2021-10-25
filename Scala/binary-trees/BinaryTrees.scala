@@ -3,29 +3,33 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 final case class Tree(left: Tree, right: Tree) {
-  def check: Int =
+  def checkSum: Int =
     left match {
       case null => 1
-      case tl   => 1 + tl.check + right.check
+      case tl   => 1 + tl.checkSum + right.checkSum
     }
 }
 
 object Tree {
   final val EmptyTree = Tree(null, null)
 
-  def apply(depth: Int): Tree =
-    if (depth > 0) Tree(Tree(depth - 1), Tree(depth - 1))
+  def sync(depth: Int): Tree = {
+    def innerBranch() = Tree.sync(depth - 1)
+    if (depth > 0) Tree(innerBranch(), innerBranch())
     else EmptyTree
+  }
 
-  def apply(depth: Int, futureDepth: Int = 0): Future[Tree] =
-    if (futureDepth >= 4)
-      Future.successful(Tree(depth))
-    else if (depth > 0)
-      Tree(depth - 1, futureDepth + 1) zip
-        Tree(depth - 1, futureDepth + 1) map { case (left, right) =>
-          Tree(left, right)
+  def async(depth: Int, futureDepth: Int = 0): Future[Tree] = {
+    def asyncBranch() = Tree.async(depth - 1, futureDepth + 1)
+
+    if (depth == 0) Future.successful(EmptyTree)
+    else if (futureDepth >= 4) Future.successful(Tree.sync(depth))
+    else
+      asyncBranch()
+        .zipWith(asyncBranch()) {
+          Tree(_, _)
         }
-    else Future.successful(EmptyTree)
+  }
 }
 
 object BinaryTrees {
@@ -35,34 +39,37 @@ object BinaryTrees {
     val maxDepth = n max (minDepth + 2)
 
     def print(name: String, depth: Int, check: Int) =
-      println(name + " of depth " + depth + "\t check: " + check)
+      println(s"$name of depth $depth\t check: $check")
 
     print(
       "stretch tree",
       maxDepth + 1,
-      Await.result(Tree(maxDepth + 1), Duration.Inf).check
+      Await.result(Tree.async(maxDepth + 1), Duration.Inf).checkSum
     )
 
-    val longLivedTree = Await.result(Tree(maxDepth), Duration.Inf)
+    val longLivedTree = Await.result(Tree.async(maxDepth), Duration.Inf)
 
-    val tasks = Future.sequence {
+    def runTasks() = {
       for {
         depth <- minDepth to maxDepth by 2
+        iterationsLimit = 1 << (maxDepth - depth + minDepth)
       } yield Future {
-        val iterationsLimit = 1 << (maxDepth - depth + minDepth)
-        val sum = 0
-          .until(iterationsLimit)
-          .foldLeft(0) { (sum, _) => sum + Tree(depth).check }
-        (depth, iterationsLimit, sum)
+        val checkSum =
+          Iterator
+          .continually(Tree.sync(depth))
+          .take(iterationsLimit)
+          .foldLeft(0)(_ + _.checkSum)
+        (iterationsLimit, depth, checkSum)
       }
     }
 
-    for {
-      (depth, iterations, check) <- Await.result(tasks, Duration.Inf)
-    } {
-      print(s"$iterations\t trees", depth, check)
-    }
-    print("long lived tree", maxDepth, longLivedTree.check)
+    val task = Future
+      .sequence(runTasks())
+      .map(_.foreach { case (iterations, depth, check) =>
+        print(s"$iterations\t trees", depth, check)
+      })
+    Await.ready(task, Duration.Inf)
 
+    print("long lived tree", maxDepth, longLivedTree.checkSum)
   }
 }

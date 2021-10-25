@@ -17,21 +17,30 @@ object revcomp extends java.io.ByteArrayOutputStream {
     input.size
   )
   private def resetAndPrint() = {
-    if (count > 0) {
-      var begin = 0
-      var end = count - 1
-      while (buf(begin) != EOL && begin < count) { begin += 1 }
-      while (begin <= end) {
-        if (buf(begin) == EOL) begin += 1
-        if (buf(end) == EOL) end -= 1
-        if (begin <= end) {
-          val temp = buf(begin)
-          buf(begin) = table(buf(end))
-          buf(end) = table(temp)
-          begin += 1
-          end -= 1
+    @tailrec
+    def swapAll(begin: Int, end: Int): Unit = {
+      def nextBegin = begin + 1
+      def nextEnd = end - 1
+
+      if (begin <= end) {
+        val beginValue = buf(begin)
+        def endValue = buf(end)
+
+        if (beginValue == EOL) swapAll(nextBegin, end)
+        else if (endValue == EOL) swapAll(begin, nextEnd)
+        else {
+          buf(begin) = table(endValue)
+          buf(end) = table(beginValue)
+          swapAll(nextBegin, nextEnd)
         }
       }
+    }
+
+    if (count > 0) {
+      swapAll(
+        begin = buf.view.take(count).indexOf(EOL),
+        end = count - 1
+      )
       System.out.write(buf, 0, count)
     }
   }
@@ -40,16 +49,16 @@ object revcomp extends java.io.ByteArrayOutputStream {
   private def loop(): Unit = {
     val chunkSize = System.in.read(input)
     if (chunkSize > 0) {
-      var idx, lastIdx = 0
-      while (idx < chunkSize) {
-        if (input(idx) == '>') {
-          if (idx > lastIdx) write(input, lastIdx, idx - lastIdx)
-          resetAndPrint()
-          reset()
-          lastIdx = idx
+      val lastIdx = input.indices
+        .take(chunkSize)
+        .foldLeft(0) { case (lastIdx, idx) =>
+          if (input(idx) == '>') {
+            if (idx > lastIdx) write(input, lastIdx, idx - lastIdx)
+            resetAndPrint()
+            reset()
+            idx
+          } else lastIdx
         }
-        idx += 1
-      }
 
       if (lastIdx < chunkSize) write(input, lastIdx, chunkSize - lastIdx)
       loop()

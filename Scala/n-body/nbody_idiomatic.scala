@@ -88,6 +88,14 @@ object JovianSystem extends NBodySystem {
 abstract class NBodySystem {
   import NBodySystem._
   protected def bodies: Seq[Body]
+  private lazy val interactingBodies =
+    bodies.toSet
+      .subsets(2)
+      .map { set =>
+        val l :: r :: Nil = set.toList
+        l -> r
+      }
+      .toList
 
   def energy: Double = {
     def energyBetween(left: Body, right: Body): Double = {
@@ -97,48 +105,27 @@ abstract class NBodySystem {
       val distance = sqrt(dx * dx + dy * dy + dz * dz)
       left.mass * right.mass / distance
     }
-
-    var e = 0.0
-    var i = 0
-    while (i < bodies.length) {
-      val body = bodies(i)
-      e += body.selfEnergy
-      var j = i + 1
-      while (j < bodies.length) {
-        e -= energyBetween(body, bodies(j))
-        j += 1
-      }
-      i += 1
-    }
-    e
+    
+    val bodiesSelfEnergy = bodies.foldLeft(0.0)(_ + _.selfEnergy)
+    interactingBodies
+      .foldLeft(bodiesSelfEnergy)(_ - energyBetween.tupled(_))
   }
 
   def advance(dt: Double) = {
-    var i = 0
-    while (i < bodies.length) {
-      val body = bodies(i)
-      var j = i + 1
-      while (j < bodies.length) {
-        val other = bodies(j)
-        val dx = body.x - other.x
-        val dy = body.y - other.y
-        val dz = body.z - other.z
+    for {
+      (left, right) <- interactingBodies
+    } {
+      val dx = left.x - right.x
+      val dy = left.y - right.y
+      val dz = left.z - right.z
 
-        val distance = sqrt(dx * dx + dy * dy + dz * dz)
-        val mag = dt / (distance * distance * distance)
+      val distance = sqrt(dx * dx + dy * dy + dz * dz)
+      val mag = dt / (distance * distance * distance)
 
-        body.advance(dx, dy, dz, -other.mass * mag)
-        other.advance(dx, dy, dz, body.mass * mag)
-        j += 1
-      }
-      i += 1
+      left.advance(dx, dy, dz, -right.mass * mag)
+      right.advance(dx, dy, dz, left.mass * mag)
     }
-
-    i = 0
-    while (i < bodies.length) {
-      bodies(i).move(dt)
-      i += 1
-    }
+    bodies.foreach(_.move(dt))
   }
 }
 

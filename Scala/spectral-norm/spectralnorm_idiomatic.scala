@@ -45,13 +45,13 @@ object spectralnorm {
   )(v: Array[Double], w: Array[Double])(range: Range)(implicit
       ctx: Ctx
   ) = {
-    for (i <- range) {
-      var s = 0.0
-      for (j <- 0 until ctx.n) {
-        s += M(i, j) * v(j)
-      }
-      w(i) = s
-    }
+    for {
+      i <- range
+      s = (0 until ctx.n)
+        .foldLeft(0.0) { case (acc, j) =>
+          acc + M(i, j) * v(j)
+        }
+    } w(i) = s
   }
 
   def work(chunks: Seq[Range])(implicit ctx: Ctx) = {
@@ -73,13 +73,18 @@ object spectralnorm {
       split(multiplyAtv(tmp, u))
     }
 
-    var vbv, vv = 0.0
-    var i = 0
-    while (i < n) {
-      vbv += u(i) * v(i)
-      vv += v(i) * v(i)
-      i += 1
+    @tailrec
+    def reduce(uv: Double, vv: Double, idx: Int): Double = {
+      if (idx < n) {
+        val u = ctx.u(idx)
+        val v = ctx.v(idx)
+        reduce(
+          uv = uv + u * v,
+          vv = vv + v * v,
+          idx + 1
+        )
+      } else math.sqrt(uv / vv)
     }
-    math.sqrt(vbv / vv)
+    reduce(0.0, 0.0, 0)
   }
 }

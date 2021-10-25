@@ -66,12 +66,10 @@ object knucleotide {
   ): Future[mutable.LongMap[Counter]] = Future {
     val counters = mutable.LongMap.empty[Counter]
     val end = sequence.length - length + 1
-    var i = 0
-    while (i < end) {
+    for (i <- 0 until end) {
       val key = encode(sequence, i, length)
       val counter = counters.getOrElseUpdate(key, new Counter(0))
       counter.n += 1
-      i += 1
     }
     counters
   }
@@ -85,8 +83,7 @@ object knucleotide {
         .by[(String, Double), Double](_._2)
         .reverse
     val builder = SortedSet.newBuilder[(String, Double)]
-    val sum = count.values
-      .foldLeft(0.0)(_ + _.n)
+    val sum = count.values.foldLeft(0.0)(_ + _.n)
     for ((k, v) <- count) {
       val key = new String(decode(k, length))
       val value = v.n / sum
@@ -97,36 +94,32 @@ object knucleotide {
 
   def encode(sequence: Array[Byte], offset: Int, length: Int): Long = {
     // assert(length <= 32)
-    var n = 0L
-    var i = 0
-    while (i < length) {
-      val m = (sequence(offset + i): @switch) match {
-        case 'a' => 0
-        case 'c' => 1
-        case 'g' => 2
-        case 't' => 3
+    0.until(length)
+      .foldLeft(0L) { case (n, i) =>
+        val m = (sequence(offset + i): @switch) match {
+          case 'a' => 0
+          case 'c' => 1
+          case 'g' => 2
+          case 't' => 3
+        }
+        n << 2 | m
       }
-      n = n << 2 | m
-      i += 1
-    }
-    n
   }
 
   def decode(n: Long, length: Int): Array[Byte] = {
     val bs = Array.ofDim[Byte](length)
-    var nn = n
-    var i = length - 1
-    while (i >= 0) {
-      val value = ((n & 3).toInt: @switch) match {
-        case 0 => 'a'
-        case 1 => 'c'
-        case 2 => 'g'
-        case 3 => 't'
+    0.until(length)
+      .reverse
+      .foldLeft(n) { case (n, i) =>
+        val value = ((n & 3).toInt: @switch) match {
+          case 0 => 'a'
+          case 1 => 'c'
+          case 2 => 'g'
+          case 3 => 't'
+        }
+        bs(i) = value.toByte
+        n >> 2
       }
-      bs(i) = value.toByte
-      nn >>= 2
-      i -= 1
-    }
     bs
   }
 }

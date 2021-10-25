@@ -84,13 +84,13 @@ object FannkuchRedux {
       var i = lo
       while (true) {
         if (p(0) != 0) {
-          val f = fcount
+          val f = fcount()
           flips = Math.max(flips, f)
           cksum += (if ((i % 2) == 0) f else -f)
         }
         i += 1
         if (i == hi) return
-        permute
+        permute()
       }
     }
 

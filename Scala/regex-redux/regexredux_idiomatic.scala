@@ -32,31 +32,27 @@ object regexredux {
   )
 
   def main(args: Array[String]) = {
-
-    var sequence = io.Source.stdin.mkString
-    val initialLength = sequence.length
-
-    def matching(s: String) =
-      java.util.regex.Pattern.compile(s).matcher(sequence)
+    val initialSequence = io.Source.stdin.mkString
+    val initialLength = initialSequence.length
 
     // remove FASTA sequence descriptions and new-lines
-    sequence = matching(">.*\n|\n").replaceAll("")
-    val codeLength = sequence.length
+    val codeSequence = ">.*\n|\n".r.replaceAllIn(initialSequence, "")
+    val codeLength = codeSequence.length
 
-    sequenceMatchPatterns.foreach { pattern =>
-      var count = 0
-      val m = matching(pattern)
-      while (m.find()) count += 1
-      println(pattern + " " + count)
-    }
-    sequenceSubstitutions.foreach { case (pattern, replacement) =>
-      sequence = matching(pattern).replaceAll(replacement)
+    for {
+      pattern <- sequenceMatchPatterns
+      count = pattern.r.findAllMatchIn(codeSequence).length
+    } println(s"$pattern $count")
+
+    val finalSequence = sequenceSubstitutions.foldLeft(codeSequence) {
+      case (lastSequence, (pattern, replacement)) =>
+        pattern.r.replaceAllIn(lastSequence, replacement)
     }
 
     println(s"""
     |$initialLength
     |$codeLength
-    |${sequence.length()}""".stripMargin)
+    |${finalSequence.length()}""".stripMargin)
   }
 
 }

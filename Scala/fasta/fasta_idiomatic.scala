@@ -55,21 +55,17 @@ class FastaOutputStream(out: OutputStream) extends BufferedOutputStream(out) {
 
   def writeRepeating(alu: Array[Byte], length: Int) = {
     val limit = alu.length
-    var n = length
-    var idx = 0
-    while (n > 0) {
-      val m = n.min(LineLength)
-      var i = 0
-      while (i < m) {
-        if(idx == limit) idx = 0
-        bufferedWrite(alu(idx))
-        idx += 1
-        i += 1
+    (length until 0 by -LineLength)
+      .foldLeft(0) { case (idx, n) =>
+        val m = n.min(LineLength)
+        val acc = 0.until(m).foldLeft(idx) { case (idx, _) =>
+          val alignedIdx = if (idx == limit) 0 else idx
+          bufferedWrite(alu(alignedIdx))
+          alignedIdx + 1
+        }
+        write(EOL)
+        acc
       }
-
-      write(EOL)
-      n -= LineLength
-    }
   }
 
   def writeRandom(distribution: (Array[Byte], Array[Double]), length: Int) = {
@@ -79,18 +75,12 @@ class FastaOutputStream(out: OutputStream) extends BufferedOutputStream(out) {
       bufferedWrite(byte)
     }
 
-    var n = length
-    while(n > 0){
-      val m = n.min(LineLength)
-      var i = 0
-      while (i < m) {
-        selectAndWriteRandom()
-        i += 1
-      }
-
-      bufferedWrite(EOL)
-      n -= LineLength
-    }
+    for {
+      n <- length until 0 by -LineLength
+      m = n.min(LineLength)
+      _ = for (_ <- 0 until m) selectAndWriteRandom()
+      _ = bufferedWrite(EOL)
+    } ()
   }
 
   private def bufferedWrite(b: Byte): Unit = {

@@ -45,14 +45,13 @@ object FannkuchRedux {
 
           count(i) = d
           System.arraycopy(current, 0, tmp, 0, ArrSize)
-          var j = 0
-          while (j <= i) {
+
+          0.to(i).foreach { j =>
             val jd = j + d
             val idx =
               if (jd <= i) jd
               else jd - i - 1
             current(j) = tmp(idx)
-            j += 1
           }
 
           initialPermute(nextIdx, i - 1)
@@ -71,13 +70,13 @@ object FannkuchRedux {
           }
           if (firstValue > 2) {
             // Reverse elements up to firstValue
-            var idx = 1
-            while (idx <= firstValue / 2) {
+            for {
+              idx <- 1 to firstValue / 2
+            } {
               val tailIdx = firstValue - idx
               val head = tmp(idx)
               tmp(idx) = tmp(tailIdx)
               tmp(tailIdx) = head
-              idx += 1
             }
           }
           firstValue = newFirstValue
@@ -94,11 +93,9 @@ object FannkuchRedux {
             val next = i + 1
             val newFirstValue = current(1)
             current(0) = newFirstValue
-            var j = 1
-            while (j < next) {
-              current(j) = current(j + 1)
-              j += 1
-            }
+            for {
+              j <- 1 until next
+            } current(j) = current(j + 1)
             current(next) = firstValue
             loop(next, newFirstValue)
           } else {

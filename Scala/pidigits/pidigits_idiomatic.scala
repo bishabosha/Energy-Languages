@@ -39,18 +39,14 @@ object pidigits {
     digits(new LFT(1, 0, 1), 1)
   }
 
-  def by[T](s: Stream[T], n: Int): Stream[Stream[T]] = {
-    if (s.isEmpty) Stream.empty
-    else
-      s.take(n) #::
-        by(s.drop(n), n)
-  }
-
   def main(args: Array[String]): Unit = {
     val limit = args(0).toInt
 
     for {
-      (digits, batchIdx) <- by(pi_digits.take(limit), 10).zipWithIndex
+      (digits, batchIdx) <- pi_digits
+        .take(limit)
+        .grouped(10)
+        .zipWithIndex
       idx = 10 * batchIdx + digits.length
     } println(f"${digits.mkString}%-10s${'\t'}:${idx}")
   }

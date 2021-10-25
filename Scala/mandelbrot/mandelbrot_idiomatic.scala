@@ -43,9 +43,10 @@ object mandelbrot {
     var bitnum = 0
     var aindex = 0
 
-    var x = 0
-    while (x < size) {
-      val cr = 2.0 * x / size - 1.5
+    for {
+      x <- 0 until size
+      cr = 2.0 * x / size - 1.5
+    } {
       var tr, ti = 0.0
       locally {
         var zr, zi = 0.0
@@ -75,8 +76,6 @@ object mandelbrot {
         bits = 0
         bitnum = 0
       }
-
-      x += 1
     }
 
     bitmap
