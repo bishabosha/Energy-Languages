@@ -1,18 +1,42 @@
+# Info
+benchmarkName = pidigits
+mainClass = pidigits
+input = 10000
+output = 
+
+# Config
+mode = 
+# #Filenames
+fast      = pidigits.scala
+idiomatic = pidigits_idiomatic.scala
+default   = ${fast}
+filename  = ${default}
+
+scalaPath  = /usr/bin/scala
+scalacPath = /usr/bin/scalac
+
+# Logic
+
+ifeq ($(mode),idiomatic)
+  	filename=${idiomatic}
+endif
+
 compile:
-		/usr/bin/scalac -d . pidigits.scala
+	${scalacPath} -d . ${filename}
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala pidigits 10000" Scala pidigits
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
 
 run:
-	/usr/bin/scala pidigits 10000
+	${scalaPath} ${mainClass} ${input} ${output}
 
 mem:
-	/usr/bin/time -v /usr/bin/scala pidigits 10000
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala pidigits 10000
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
 
 clean:
 	rm -rf *.class *.tasty
+ 

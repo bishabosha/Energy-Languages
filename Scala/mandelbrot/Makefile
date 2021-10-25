@@ -1,18 +1,43 @@
+# Info
+benchmarkName = mand
+      #cmd = 'ls -la'elbrot
+mainClass = mandelbrot
+input = 16000
+output = 
+
+# Config
+mode = 
+# #Filenames
+fast      = mandelbrot.scala
+idiomatic = mandelbrot_idiomatic.scala
+default   = ${fast}
+filename  = ${default}
+
+scalaPath  = /usr/bin/scala
+scalacPath = /usr/bin/scalac
+
+# Logic
+
+ifeq ($(mode),idiomatic)
+  	filename=${idiomatic}
+endif
+
 compile:
-		/usr/bin/scalac -d . mandelbrot.scala
+	${scalacPath} -d . ${filename}
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala mandelbrot 16000" Scala mandelbrot
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
 
 run:
-	/usr/bin/scala mandelbrot 16000
+	${scalaPath} ${mainClass} ${input} ${output}
 
 mem:
-	/usr/bin/time -v /usr/bin/scala mandelbrot 16000
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala mandelbrot 16000
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
 
 clean:
 	rm -rf *.class *.tasty
+ 

@@ -1,19 +1,42 @@
+# Info
+benchmarkName = regex-redux
+mainClass = regexredux
+input = 0 < ../../regexredux-input5000000.txt -J-Xmx1G
+output = 
+
+# Config
+mode = 
+# #Filenames
+fast      = regexredux.scala
+idiomatic = regexredux_idiomatic.scala
+default   = ${fast}
+filename  = ${default}
+
+scalaPath  = /usr/bin/scala
+scalacPath = /usr/bin/scalac
+
+# Logic
+
+ifeq ($(mode),idiomatic)
+  	filename=${idiomatic}
+endif
+
 compile:
-		/usr/bin/scalac -d . regexredux.scala
+	${scalacPath} -d . ${filename}
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala regexredux 0 < ../../regexredux-input5000000.txt" Scala regex-redux
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
 
 run:
-	/usr/bin/scala regexredux 0 < ../../regexredux-input5000000.txt
-
+	${scalaPath} ${mainClass} ${input} ${output}
 
 mem:
-	/usr/bin/time -v /usr/bin/scala regexredux 0 < ../../regexredux-input5000000.txt
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala regexredux 0 < ../../regexredux-input5000000.txt
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
 
 clean:
 	rm -rf *.class *.tasty
+ 

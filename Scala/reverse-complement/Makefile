@@ -1,19 +1,42 @@
+# Info
+benchmarkName = reverse-complement
+mainClass = revcomp
+input = 0 < ../../revcomp-input25000000.txt -J-Xmx512M
+output = 
+
+# Config
+mode = 
+# #Filenames
+fast      = revcomp.scala
+idiomatic = revcomp_idiomatic.scala
+default   = ${fast}
+filename  = ${default}
+
+scalaPath  = /usr/bin/scala
+scalacPath = /usr/bin/scalac
+
+# Logic
+
+ifeq ($(mode),idiomatic)
+  	filename=${idiomatic}
+endif
+
 compile:
-		/usr/bin/scalac -d . revcomp.scala
+	${scalacPath} -d . ${filename}
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala revcomp 0 < ../../revcomp-input25000000.txt" Scala reverse-complement
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
 
 run:
-	/usr/bin/scala revcomp 0 < ../../revcomp-input25000000.txt
+	${scalaPath} ${mainClass} ${input} ${output}
 
 mem:
-	/usr/bin/time -v /usr/bin/scala revcomp 0 < ../../revcomp-input25000000.txt
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala revcomp 0 < ../../revcomp-input25000000.txt
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
 
 clean:
 	rm -rf *.class *.tasty
-	
+ 

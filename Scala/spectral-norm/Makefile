@@ -1,19 +1,42 @@
+# Info
+benchmarkName = spectral-norm
+mainClass = spectralnorm
+input = 5500
+output = 
+
+# Config
+mode = 
+# #Filenames
+fast      = spectralnorm.scala
+idiomatic = spectralnorm_idiomatic.scala
+default   = ${fast}
+filename  = ${default}
+
+scalaPath  = /usr/bin/scala
+scalacPath = /usr/bin/scalac
+
+# Logic
+
+ifeq ($(mode),idiomatic)
+  	filename=${idiomatic}
+endif
+
 compile:
-		/usr/bin/scalac -d . spectralnorm.scala
+	${scalacPath} -d . ${filename}
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala spectralnorm 5500" Scala spectral-norm
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
 
 run:
-	/usr/bin/scala spectralnorm 5500
-
+	${scalaPath} ${mainClass} ${input} ${output}
 
 mem:
-	/usr/bin/time -v /usr/bin/scala spectralnorm 5500
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala spectralnorm 5500
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
 
 clean:
 	rm -rf *.class *.tasty
+ 

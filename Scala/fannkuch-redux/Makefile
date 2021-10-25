@@ -1,18 +1,42 @@
+# Info
+benchmarkName = fannkuch-redux
+mainClass = FannkuchRedux
+input = 12
+output = 
+
+# Config
+mode = 
+# #Filenames
+fast      = FannkuchRedux.scala
+idiomatic = FannkuchRedux_idiomatic.scala
+default   = ${fast}
+filename  = ${default}
+
+scalaPath  = /usr/bin/scala
+scalacPath = /usr/bin/scalac
+
+# Logic
+
+ifeq ($(mode),idiomatic)
+  	filename=${idiomatic}
+endif
+
 compile:
-	/usr/bin/scalac -d . FannkuchRedux.scala
-	
+	${scalacPath} -d . ${filename}
+
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/scala FannkuchRedux 12" Scala fannkuch-redux
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" Scala ${benchmarkName}
 
 run:
-	/usr/bin/scala FannkuchRedux 12
+	${scalaPath} ${mainClass} ${input} ${output}
 
 mem:
-	/usr/bin/time -v /usr/bin/scala FannkuchRedux 12
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/scala FannkuchRedux 12
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
 
 clean:
 	rm -rf *.class *.tasty
+ 
