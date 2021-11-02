@@ -80,11 +80,12 @@ object knucleotide {
       length: Int,
       count: collection.Map[Long, Counter]
   ): Iterable[(String, Double)] = {
-    implicit val ordering: Ordering[(String, Double)] =
-      Ordering
-        .by[(String, Double), Double](_._2)
-        .reverse
-    val builder = SortedSet.newBuilder[(String, Double)]
+    val builder =
+      SortedSet.newBuilder[(String, Double)](
+        Ordering
+          .by[(String, Double), Double](_._2)
+          .reverse
+      )
     val sum = count.values
       .foldLeft(0.0)(_ + _.n)
     for ((k, v) <- count) {
@@ -106,7 +107,8 @@ object knucleotide {
         case 'g' => 2
         case 't' => 3
       }
-      n = n << 2 | m
+      n <<= 2
+      n |= m
       i += 1
     }
     n
@@ -117,13 +119,12 @@ object knucleotide {
     var nn = n
     var i = length - 1
     while (i >= 0) {
-      val value = ((n & 3).toInt: @switch) match {
+      bs(i) = ((nn & 3).toInt: @switch) match {
         case 0 => 'a'
         case 1 => 'c'
         case 2 => 'g'
         case 3 => 't'
       }
-      bs(i) = value.toByte
       nn >>= 2
       i -= 1
     }

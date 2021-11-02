@@ -14,7 +14,8 @@ def genMakefile(): Unit = {
       file,
       template(config).getBytes(),
       StandardOpenOption.CREATE,
-      StandardOpenOption.WRITE
+      StandardOpenOption.WRITE,
+      StandardOpenOption.TRUNCATE_EXISTING
     )
   }
 }
@@ -24,7 +25,7 @@ val configs = List(
   Config(
     benchmarkName = "binary-trees",
     mainClass = "BinaryTrees",
-    input = "21",
+    inputs = Inputs(test = "10", benchmark = "21"),
     files = Filenames(
       fast = "BinaryTrees.scala",
       idiomatic = "BinaryTrees.scala"
@@ -33,7 +34,7 @@ val configs = List(
   Config(
     benchmarkName = "fannkuch-redux",
     mainClass = "FannkuchRedux",
-    input = "12",
+    inputs = Inputs(test = "7", benchmark = "12"),
     files = Filenames(
       fast = "FannkuchRedux.scala",
       idiomatic = "FannkuchRedux_idiomatic.scala"
@@ -42,7 +43,7 @@ val configs = List(
   Config(
     benchmarkName = "fasta",
     mainClass = "fasta",
-    input = "25000000",
+    inputs = Inputs(test = "1000", benchmark = "25000000"),
     files = Filenames(
       fast = "fasta.scala",
       idiomatic = "fasta_idiomatic.scala"
@@ -51,7 +52,10 @@ val configs = List(
   Config(
     benchmarkName = "k-nucleotide",
     mainClass = "knucleotide",
-    input = "0 < ../../knucleotide-input25000000.txt -J-Xmx512M",
+    inputs = Inputs(
+      test = "0 < ../fasta/test-output.txt",
+      benchmark = "0 < ../../knucleotide-input25000000.txt -J-Xmx512M"
+    ),
     files = Filenames(
       fast = "knucleotide.scala",
       idiomatic = "knucleotide_idiomatic.scala"
@@ -60,16 +64,17 @@ val configs = List(
   Config(
     benchmarkName = "mandelbrot",
     mainClass = "mandelbrot",
-    input = "16000",
+    inputs = Inputs(test = "200", benchmark = "16000"),
     files = Filenames(
       fast = "mandelbrot.scala",
       idiomatic = "mandelbrot_idiomatic.scala"
-    )
+    ),
+    testCommand = s"cmp test-output.txt -"
   ),
   Config(
     benchmarkName = "n-body",
     mainClass = "nbody",
-    input = "50000000",
+    inputs = Inputs(test = "1000", benchmark = "50000000"),
     files = Filenames(
       fast = "nbody.scala",
       idiomatic = "nbody_idiomatic.scala"
@@ -78,7 +83,7 @@ val configs = List(
   Config(
     benchmarkName = "pidigits",
     mainClass = "pidigits",
-    input = "10000",
+    inputs = Inputs(test = "30", benchmark = "10000"),
     files = Filenames(
       fast = "pidigits.scala",
       idiomatic = "pidigits_idiomatic.scala"
@@ -87,7 +92,10 @@ val configs = List(
   Config(
     benchmarkName = "regex-redux",
     mainClass = "regexredux",
-    input = "0 < ../../regexredux-input5000000.txt -J-Xmx1G",
+    inputs = Inputs(
+      test = "0 < ../fasta/test-output.txt",
+      benchmark = "0 < ../../regexredux-input5000000.txt -J-Xmx1G"
+    ),
     files = Filenames(
       fast = "regexredux.scala",
       idiomatic = "regexredux_idiomatic.scala"
@@ -96,7 +104,10 @@ val configs = List(
   Config(
     benchmarkName = "reverse-complement",
     mainClass = "revcomp",
-    input = "0 < ../../revcomp-input25000000.txt -J-Xmx512M",
+    inputs = Inputs(
+      test = "0 < ../fasta/test-output.txt",
+      benchmark = "0 < ../../revcomp-input25000000.txt -J-Xmx512M"
+    ),
     files = Filenames(
       fast = "revcomp.scala",
       idiomatic = "revcomp_idiomatic.scala"
@@ -105,7 +116,7 @@ val configs = List(
   Config(
     benchmarkName = "spectral-norm",
     mainClass = "spectralnorm",
-    input = "5500",
+    inputs = Inputs(test = "100", benchmark = "5500"),
     files = Filenames(
       fast = "spectralnorm.scala",
       idiomatic = "spectralnorm_idiomatic.scala"
@@ -116,12 +127,17 @@ val configs = List(
 case class Config(
     benchmarkName: String,
     mainClass: String,
-    input: String,
-    files: Filenames
+    inputs: Inputs,
+    files: Filenames,
+    testCommand: String = "diff test-output.txt -"
 ) {
   def directory: Path = cwd.resolve(benchmarkName)
 }
 
+case class Inputs(
+    test: String,
+    benchmark: String
+)
 case class Filenames(
     fast: String,
     idiomatic: String
@@ -132,7 +148,8 @@ def template(ctx: Config): String = {
   s"""# Info
   |benchmarkName = ${benchmarkName}
   |mainClass = ${mainClass}
-  |input = ${input}
+  |input-test = ${inputs.test}
+  |input-benchmark = ${inputs.benchmark}
   |output = 
   |
   |# Config
@@ -160,19 +177,21 @@ def template(ctx: Config): String = {
   |
   |measure:
   |	sudo modprobe msr
-  |	sudo ../../RAPL/main "$${scalaPath} $${mainClass} $${input} $${output}" $${configName} $${benchmarkName}
+  |	sudo ../../RAPL/main "$${scalaPath} $${mainClass} $${input-benchmark} $${output}" $${configName} $${benchmarkName}
+  |
+  |test:
+  |	$${scalaPath} $${mainClass} $${input-test} $${output} | ${testCommand}
   |
   |run:
-  |	$${scalaPath} $${mainClass} $${input} $${output}
+  |	$${scalaPath} $${mainClass} $${input-benchmark} $${output}
   |
   |mem:
-  |	/usr/bin/time -v $${scalaPath} $${mainClass} $${input} $${output}
+  |	/usr/bin/time -v $${scalaPath} $${mainClass} $${input-benchmark} $${output}
   |
   |valgrind:
-  |	valgrind --tool=massif --stacks=yes $${scalaPath} $${mainClass} $${input} $${output}
+  |	valgrind --tool=massif --stacks=yes $${scalaPath} $${mainClass} $${input-benchmark} $${output}
   |
   |clean:
   |	rm -rf *.class *.tasty
   |""".stripMargin
 }
-end template

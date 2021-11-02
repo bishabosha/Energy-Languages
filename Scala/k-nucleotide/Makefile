@@ -1,7 +1,8 @@
 # Info
 benchmarkName = k-nucleotide
 mainClass = knucleotide
-input = 0 < ../../knucleotide-input25000000.txt -J-Xmx512M
+input-test = 0 < ../fasta/test-output.txt
+input-benchmark = 0 < ../../knucleotide-input25000000.txt -J-Xmx512M
 output = 
 
 # Config
@@ -29,16 +30,19 @@ compile:
 
 measure:
 	sudo modprobe msr
-	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input} ${output}" ${configName} ${benchmarkName}
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input-benchmark} ${output}" ${configName} ${benchmarkName}
+
+test:
+	${scalaPath} ${mainClass} ${input-test} ${output} | diff test-output.txt -
 
 run:
-	${scalaPath} ${mainClass} ${input} ${output}
+	${scalaPath} ${mainClass} ${input-benchmark} ${output}
 
 mem:
-	/usr/bin/time -v ${scalaPath} ${mainClass} ${input} ${output}
+	/usr/bin/time -v ${scalaPath} ${mainClass} ${input-benchmark} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input} ${output}
+	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input-benchmark} ${output}
 
 clean:
 	rm -rf *.class *.tasty
