@@ -13,22 +13,9 @@ final case class Tree(left: Tree, right: Tree) {
 object Tree {
   final val EmptyTree = Tree(null, null)
 
-  def sync(depth: Int): Tree = {
-    def innerBranch() = Tree.sync(depth - 1)
-    if (depth > 0) Tree(innerBranch(), innerBranch())
+  def ofDepth(depth: Int): Tree = {
+    if (depth > 0) Tree(Tree.ofDepth(depth - 1), Tree.ofDepth(depth - 1))
     else EmptyTree
-  }
-
-  def async(depth: Int, futureDepth: Int = 0): Future[Tree] = {
-    def asyncBranch() = Tree.async(depth - 1, futureDepth + 1)
-
-    if (depth == 0) Future.successful(EmptyTree)
-    else if (futureDepth >= 4) Future.successful(Tree.sync(depth))
-    else
-      asyncBranch()
-        .zipWith(asyncBranch()) {
-          Tree(_, _)
-        }
   }
 }
 
@@ -44,27 +31,25 @@ object BinaryTrees {
     print(
       "stretch tree",
       maxDepth + 1,
-      Await.result(Tree.async(maxDepth + 1), Duration.Inf).checkSum
+      Tree.ofDepth(maxDepth + 1).checkSum
     )
 
-    val longLivedTree = Await.result(Tree.async(maxDepth), Duration.Inf)
+    val longLivedTree = Tree.ofDepth(maxDepth)
 
-    def runTasks() = {
-      for {
-        depth <- minDepth to maxDepth by 2
-        iterationsLimit = 1 << (maxDepth - depth + minDepth)
-      } yield Future {
-        val checkSum =
-          Iterator
-          .continually(Tree.sync(depth))
-          .take(iterationsLimit)
-          .foldLeft(0)(_ + _.checkSum)
-        (iterationsLimit, depth, checkSum)
-      }
+    def runTask(depth: Int) = Future {
+      val iterations = 1 << (maxDepth - depth + minDepth)
+      val checkSum =
+        (1 to iterations)
+          .foldLeft(0) { case (checkSum, _) =>
+            checkSum + Tree.ofDepth(depth).checkSum
+          }
+      (iterations, depth, checkSum)
     }
 
+    val iterations = minDepth to maxDepth by 2
+
     val task = Future
-      .sequence(runTasks())
+      .traverse(iterations)(runTask)
       .map(_.foreach { case (iterations, depth, check) =>
         print(s"$iterations\t trees", depth, check)
       })

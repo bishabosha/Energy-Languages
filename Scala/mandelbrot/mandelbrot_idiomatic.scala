@@ -18,12 +18,8 @@ object mandelbrot {
     val size = args(0).toInt
     val bytesPerRow = (size + 7) / 8 // ceiling of (size / 8)
     val writer = new BufferedOutputStream(System.out)
-    val tasks = Future.sequence {
-      for {
-        idx <- 0 until size
-      } yield Future {
-        calculateRow(size, bytesPerRow)(idx)
-      }
+    val tasks = Future.traverse(0 until size) { idx =>
+      Future { calculateRow(size, bytesPerRow)(idx) }
     }
 
     println(s"""P4

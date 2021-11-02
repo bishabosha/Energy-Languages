@@ -17,11 +17,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object knucleotide {
   def main(args: Array[String]): Unit = {
     val sequence = extractSequence(System.in, "THREE")
-    val tasks = Future.sequence {
-      Seq(18, 12, 6, 4, 3, 2, 1)
-        .map(count(sequence, _))
-        .reverse
-    }
+    val tasks = Future
+      .traverse(Seq(1, 2, 3, 4, 6, 12, 18))(count(sequence, _))
 
     val (cs1, cs2) = Await
       .result(tasks, Duration.Inf)

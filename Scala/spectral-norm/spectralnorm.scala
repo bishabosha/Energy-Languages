@@ -19,12 +19,31 @@ object spectralnorm {
     private implicit val ctx: Ctx = this
     val multiplyAv = multiply(A) _
     val multiplyAtv = multiply(At) _
+
+    // Matrix multiplication for a given range: w <- M*v
+    private def multiply(
+        M: (Int, Int) => Double
+    )(v: Array[Double], w: Array[Double])(range: Range)(implicit
+        ctx: Ctx
+    ) = {
+      for (i <- range) {
+        var s = 0.0
+        for (j <- 0 until n) {
+          s += M(i, j) * v(j)
+        }
+        w(i) = s
+      }
+    }
   }
 
   def main(args: Array[String]): Unit = {
     val n = if (args.length > 0) args(0).toInt else 100
     implicit val ctx: Ctx = Ctx(n)
+    printf("%.09f\n", work())
+  }
 
+  def work()(implicit ctx: Ctx) = {
+    import ctx._
     // Calculate the chunks and perform calculation.
     val chunks = {
       val threads = Runtime.getRuntime.availableProcessors
@@ -36,26 +55,6 @@ object spectralnorm {
       } yield start until end
     }
 
-    printf("%.09f\n", work(chunks))
-  }
-
-  // Matrix multiplication for a given range: w <- M*v
-  def multiply(
-      M: (Int, Int) => Double
-  )(v: Array[Double], w: Array[Double])(range: Range)(implicit
-      ctx: Ctx
-  ) = {
-    for (i <- range) {
-      var s = 0.0
-      for (j <- 0 until ctx.n) {
-        s += M(i, j) * v(j)
-      }
-      w(i) = s
-    }
-  }
-
-  def work(chunks: Seq[Range])(implicit ctx: Ctx) = {
-    import ctx._
     def split(f: (Range) => Unit) = {
       val tasks = Future.sequence(
         for {
