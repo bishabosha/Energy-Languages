@@ -22,6 +22,10 @@ object Tree {
 object BinaryTrees {
   def main(args: Array[String]): Unit = {
     val n = Integer.parseInt(args.head)
+    run(n)
+  }
+
+  def run(n: Int): Unit = {
     val minDepth = 4
     val maxDepth = n max (minDepth + 2)
 
