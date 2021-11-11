@@ -10,6 +10,7 @@ import math._
 object nbody {
   def main(args: Array[String]) = {
     val iterations = args(0).toInt
+    run(iterations)
   }
   def run(iterations: Int): Unit = {
     val system = new JovianSystem()
