@@ -9,6 +9,10 @@ object FannkuchRedux {
 
   def main(args: Array[String]) = {
     val n = args.head.toInt
+    run(n)
+  }
+
+  def run(n: Int): Unit = {
     val (checkSum, maxFlips) =
       if (n < 0 || n > 20) (-1, -1)
       else if (n <= 1) (0, 0)

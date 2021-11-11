@@ -136,8 +136,10 @@ case class Config(
 
 case class Inputs(
     test: String,
-    benchmark: String
-)
+    benchmark: String,
+){
+  def jvmRunner: String = benchmark.stripPrefix("0 < ")
+}
 case class Filenames(
     fast: String,
     idiomatic: String
@@ -150,6 +152,9 @@ def template(ctx: Config): String = {
   |mainClass = ${mainClass}
   |input-test = ${inputs.test}
   |input-benchmark = ${inputs.benchmark}
+  |input-jvm-runner= ${inputs.jvmRunner}
+  |warmup-iterations=5
+  |warmup-measure=true
   |output = 
   |
   |# Config
@@ -159,25 +164,23 @@ def template(ctx: Config): String = {
   |# Filenames
   |fast      = ${files.fast}
   |idiomatic = ${files.idiomatic}
+  |runner    = JvmRunner.scala
   |
-  |default   = $${fast}
-  |filename  = $${default}
+  |default    = $${fast}
+  |impl-file  = $${default} 
   |
   |# Environment
+  |sRAPLPath  = ../sRAPL
   |scalaPath  = /usr/bin/scala
-  |scalacPath = /usr/bin/scalac
+  |scalacPath = /usr/bin/scalac -cp $${sRAPLPath}/sRAPL.jar
   |
   |# Logic (do not edit)
   |ifeq ($$(mode),idiomatic)
-  |  	filename=$${idiomatic}
+  |  	impl-file=$${idiomatic}
   |endif
   |
   |compile:
-  |	$${scalacPath} -d . $${filename}
-  |
-  |measure:
-  |	sudo modprobe msr
-  |	sudo ../../RAPL/main "$${scalaPath} $${mainClass} $${input-benchmark} $${output}" $${configName} $${benchmarkName}
+  |	$${scalacPath} -d . $${impl-file} $${runner}
   |
   |test:
   |	$${scalaPath} $${mainClass} $${input-test} $${output} | ${testCommand}
@@ -185,6 +188,22 @@ def template(ctx: Config): String = {
   |run:
   |	$${scalaPath} $${mainClass} $${input-benchmark} $${output}
   |
+  |measure:
+  |	sudo modprobe msr
+  |	sudo ../../RAPL/main "$${scalaPath} $${mainClass} $${input-benchmark} $${output}" $${configName} $${benchmarkName}
+  |
+  |measureWithWarmup:
+	|${'\t'}sudo modprobe msr
+	|${'\t'}sudo $${scalaPath} $${scalaClasspath} \\
+  |   -cp $${sRAPLPath}/sRAPL.jar \\
+  |   -cp $${sRAPLPath}/jRAPL-1.0.jar \\
+  |   run $${input-jvm-runner} \\
+  |   --label $${benchmarkName} \\
+	|   --measure-warmup $${warmup-measure} \\
+	|   --warmup-iterations $${warmup-iterations} \\
+	|   --output ../$${configName}-warmedUp.csv \\
+	|   $${output} 
+  | 
   |mem:
   |	/usr/bin/time -v $${scalaPath} $${mainClass} $${input-benchmark} $${output}
   |

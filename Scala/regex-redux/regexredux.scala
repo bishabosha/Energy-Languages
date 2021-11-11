@@ -32,8 +32,11 @@ object regexredux {
   )
 
   def main(args: Array[String]) = {
+    run(System.in)
+  }
 
-    var sequence = io.Source.stdin.mkString
+  def run(inputStream: java.io.InputStream): Unit = {
+    var sequence = io.Source.fromInputStream(inputStream).mkString
     val initialLength = sequence.length
 
     def matching(s: String) =

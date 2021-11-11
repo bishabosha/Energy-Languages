@@ -16,6 +16,10 @@ object mandelbrot {
 
   def main(args: Array[String]) = {
     val size = args(0).toInt
+    run(size)
+  }
+  
+  def run(size: Int): Unit = {
     val bytesPerRow = (size + 7) / 8 // ceiling of (size / 8)
     val writer = new BufferedOutputStream(System.out)
     val tasks = Future.traverse(0 until size) { idx =>

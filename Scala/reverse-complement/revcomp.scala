@@ -37,8 +37,8 @@ object revcomp extends java.io.ByteArrayOutputStream {
   }
 
   @tailrec
-  private def loop(): Unit = {
-    val chunkSize = System.in.read(input)
+  private def loop(inputStream: java.io.InputStream): Unit = {
+    val chunkSize = inputStream.read(input)
     if (chunkSize > 0) {
       var idx, lastIdx = 0
       while (idx < chunkSize) {
@@ -52,17 +52,21 @@ object revcomp extends java.io.ByteArrayOutputStream {
       }
 
       if (lastIdx < chunkSize) write(input, lastIdx, chunkSize - lastIdx)
-      loop()
+      loop(inputStream)
     }
   }
 
   def main(args: Array[String]) = {
+    run(System.in)
+  }
+  
+  def run(inputStream: java.io.InputStream): Unit = {
     for ((i, o) <- "ACGTUMRWSYKVHDBN" zip "TGCAAKYWSRMBDHVN") {
       table(i) = o.toByte
       table(i.toLower) = o.toByte
     }
 
-    loop()
+    loop(inputStream)
     resetAndPrint()
   }
 }

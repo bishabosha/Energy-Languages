@@ -5,7 +5,7 @@ from lazyme.string import color_print
 path = '.'
 action = 'compile'
 arguments = ''
-supportedCommands = ['compile', 'run', 'test', 'measure', 'mem', 'valgrind', 'clean']
+supportedCommands = ['compile', 'run', 'test', 'measure', 'measureWithWarmup', 'mem', 'valgrind', 'clean']
 
 def file_exists(file_path):
     if not file_path:

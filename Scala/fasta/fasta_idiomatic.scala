@@ -29,8 +29,12 @@ object fasta {
       .tail
   )
 
-  def main(args: Array[String]) = {
+def main(args: Array[String]) = {
     val n = args(0).toInt
+    run(n)
+  }
+  
+  def run(n: Int): Unit = {
     val s = new FastaOutputStream(System.out)
 
     s.writeDescription("ONE Homo sapiens alu")

@@ -23,7 +23,7 @@ object spectralnorm {
 // Matrix multiplication for a given idx in range: w <- M*v
     private def multiply(
         M: (Int, Int) => Double
-    )(v: Array[Double], w: Array[Double])(idx: Int)(implicit
+    )(v: Array[Double], w: Array[Double])(i: Int)(implicit
         ctx: Ctx
     ) = {
       w(i) = (0 until ctx.n)
@@ -34,7 +34,11 @@ object spectralnorm {
   }
 
   def main(args: Array[String]): Unit = {
-    val n = if (args.length > 0) args(0).toInt else 100
+    val n = args(0).toInt
+    run(n)
+  }
+  
+  def run(n: Int): Unit = {
     implicit val ctx: Ctx = Ctx(n)
     printf("%.09f\n", work())
   }

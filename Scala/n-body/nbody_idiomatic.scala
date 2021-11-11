@@ -10,8 +10,10 @@ import math._
 object nbody {
   def main(args: Array[String]) = {
     val iterations = args(0).toInt
+  }
 
-    val system = JovianSystem
+  def run(iterations: Int): Unit = {
+    val system = new JovianSystem()
     def showSystemEnergy() =
       println(f"${system.energy}%.9f")
 
@@ -21,7 +23,7 @@ object nbody {
   }
 }
 
-object JovianSystem extends NBodySystem {
+class JovianSystem() extends NBodySystem {
   import NBodySystem._
   protected val bodies = {
     val SOLAR_MASS = 4 * Pi * Pi

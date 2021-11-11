@@ -3,7 +3,9 @@ benchmarkName = binary-trees
 mainClass = BinaryTrees
 input-test = 10
 input-benchmark = 21
+input-jvm-runner= 21
 warmup-iterations=5
+warmup-measure=true
 output = 
 
 # Config
@@ -13,28 +15,23 @@ configName = Scala
 # Filenames
 fast      = BinaryTrees.scala
 idiomatic = BinaryTrees.scala
-runner    = BinaryTreesRunner.scala
+runner    = JvmRunner.scala
 
-default   = ${fast}
-filename  = ${default}
+default    = ${fast}
+impl-file  = ${default} 
 
 # Environment
+sRAPLPath  = ../sRAPL
 scalaPath  = /usr/bin/scala
-scalacPath = /usr/bin/scalac
-scalacClasspath = -cp ../sRAPL/sRAPL.jar 
-scalaClasspath = -cp ../sRAPL/sRAPL.jar -cp ../sRAPL/jRAPL-1.0.jar
+scalacPath = /usr/bin/scalac -cp ${sRAPLPath}/sRAPL.jar
 
 # Logic (do not edit)
 ifeq ($(mode),idiomatic)
-  	filename=${idiomatic}
+  	impl-file=${idiomatic}
 endif
 
 compile:
-	${scalacPath} ${scalacClasspath} -d . ${filename} ${runner}
-
-measure:
-	sudo modprobe msr
-	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input-benchmark} ${output}" ${configName} ${benchmarkName}
+	${scalacPath} -d . ${impl-file} ${runner}
 
 test:
 	${scalaPath} ${mainClass} ${input-test} ${output} | diff test-output.txt -
@@ -42,10 +39,22 @@ test:
 run:
 	${scalaPath} ${mainClass} ${input-benchmark} ${output}
 
+measure:
+	sudo modprobe msr
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input-benchmark} ${output}" ${configName} ${benchmarkName}
+
 measureWithWarmup:
 	sudo modprobe msr
-	sudo ${scalaPath} ${scalaClasspath} runner ${input-benchmark} ${output} 
-
+	sudo ${scalaPath} ${scalaClasspath} \
+   -cp ${sRAPLPath}/sRAPL.jar \
+   -cp ${sRAPLPath}/jRAPL-1.0.jar \
+   run ${input-jvm-runner} \
+   --label ${benchmarkName} \
+   --measure-warmup ${warmup-measure} \
+   --warmup-iterations ${warmup-iterations} \
+   --output ../${configName}-warmedUp.csv \
+   ${output} 
+ 
 mem:
 	/usr/bin/time -v ${scalaPath} ${mainClass} ${input-benchmark} ${output}
 

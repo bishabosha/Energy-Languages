@@ -32,7 +32,11 @@ object regexredux {
   )
 
   def main(args: Array[String]) = {
-    val initialSequence = io.Source.stdin.mkString
+    run(System.in)
+  }
+
+  def run(inputStream: java.io.InputStream): Unit = {
+    val initialSequence = io.Source.fromInputStream(inputStream).mkString
     val initialLength = initialSequence.length
 
     // remove FASTA sequence descriptions and new-lines

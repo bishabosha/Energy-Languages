@@ -37,7 +37,11 @@ object spectralnorm {
   }
 
   def main(args: Array[String]): Unit = {
-    val n = if (args.length > 0) args(0).toInt else 100
+    val n = args(0).toInt
+    run(n)
+  }
+  
+  def run(n: Int): Unit = {
     implicit val ctx: Ctx = Ctx(n)
     printf("%.09f\n", work())
   }

@@ -3,6 +3,9 @@ benchmarkName = fasta
 mainClass = fasta
 input-test = 1000
 input-benchmark = 25000000
+input-jvm-runner= 25000000
+warmup-iterations=5
+warmup-measure=true
 output = 
 
 # Config
@@ -12,25 +15,23 @@ configName = Scala
 # Filenames
 fast      = fasta.scala
 idiomatic = fasta_idiomatic.scala
+runner    = JvmRunner.scala
 
-default   = ${fast}
-filename  = ${default}
+default    = ${fast}
+impl-file  = ${default} 
 
 # Environment
+sRAPLPath  = ../sRAPL
 scalaPath  = /usr/bin/scala
-scalacPath = /usr/bin/scalac
+scalacPath = /usr/bin/scalac -cp ${sRAPLPath}/sRAPL.jar
 
 # Logic (do not edit)
 ifeq ($(mode),idiomatic)
-  	filename=${idiomatic}
+  	impl-file=${idiomatic}
 endif
 
 compile:
-	${scalacPath} -d . ${filename}
-
-measure:
-	sudo modprobe msr
-	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input-benchmark} ${output}" ${configName} ${benchmarkName}
+	${scalacPath} -d . ${impl-file} ${runner}
 
 test:
 	${scalaPath} ${mainClass} ${input-test} ${output} | diff test-output.txt -
@@ -38,6 +39,22 @@ test:
 run:
 	${scalaPath} ${mainClass} ${input-benchmark} ${output}
 
+measure:
+	sudo modprobe msr
+	sudo ../../RAPL/main "${scalaPath} ${mainClass} ${input-benchmark} ${output}" ${configName} ${benchmarkName}
+
+measureWithWarmup:
+	sudo modprobe msr
+	sudo ${scalaPath} ${scalaClasspath} \
+   -cp ${sRAPLPath}/sRAPL.jar \
+   -cp ${sRAPLPath}/jRAPL-1.0.jar \
+   run ${input-jvm-runner} \
+   --label ${benchmarkName} \
+   --measure-warmup ${warmup-measure} \
+   --warmup-iterations ${warmup-iterations} \
+   --output ../${configName}-warmedUp.csv \
+   ${output} 
+ 
 mem:
 	/usr/bin/time -v ${scalaPath} ${mainClass} ${input-benchmark} ${output}
 

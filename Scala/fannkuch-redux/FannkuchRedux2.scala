@@ -108,7 +108,11 @@ object FannkuchRedux {
   }
 
   def main(args: Array[String]) = {
-    val n = (if (args.length > 0) args(0).toInt else 7)
+    val n = args.head.toInt
+    run(n)
+  }
+
+  def run(n: Int): Unit = {
     if (n < 0 || n > 20) announce(n, -1, -1)
     else if (n <= 1) announce(n, 0, 0)
     else {

@@ -48,7 +48,10 @@ object pidigits {
 
   def main(args: Array[String]): Unit = {
     val limit = args(0).toInt
-
+    run(limit)
+  }
+  
+  def run(limit: Int): Unit ={
     for {
       (digits, batchIdx) <- by(pi_digits.take(limit), 10).zipWithIndex
       idx = 10 * batchIdx + digits.length
