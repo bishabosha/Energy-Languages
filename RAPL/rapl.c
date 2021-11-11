@@ -40,6 +40,7 @@ long long read_msr(int fd, int which) {
   uint64_t data;
 
   if ( pread(fd, &data, sizeof data, which) != sizeof data ) {
+    printf("code %d\n", which);
     perror("rdmsr:pread");
     exit(127);
   }
@@ -57,6 +58,7 @@ long long read_msr(int fd, int which) {
 #define CPU_HASWELL_EP   63
 #define CPU_SKYLAKE1   78
 #define CPU_SKYLAKE2   94
+#define CPU_SKYLAKEX   85
 #define CPU_BROADWELL  77
 #define CPU_BROADWELL2  79
 #define CPU_WHISKEYLAKE 142
@@ -133,6 +135,9 @@ int detect_cpu(void) {
     case CPU_SKYLAKE2:
       printf("Found SKYLAKE2 CPU\n");
       break;
+    case CPU_SKYLAKEX:
+      printf("Foun SKYLAKEX CPU\n");
+      break;
     case CPU_BROADWELL:
       printf("Found BROADWELL CPU\n");
       break;
@@ -179,12 +184,12 @@ int rapl_init(int core)
   energy_units=pow(0.5,(double)((result>>8)&0x1f));
   time_units=pow(0.5,(double)((result>>16)&0xf));
 
-  /*
+  
   printf("Power units = %.3fW\n",power_units);
   printf("Energy units = %.8fJ\n",energy_units);
   printf("Time units = %.8fs\n",time_units);
   printf("\n");
-  */
+  
 
 
   return 0;
@@ -265,14 +270,22 @@ void rapl_before(FILE * fp,int core)
     double acc_pkg_throttled_time=(double)result*time_units;
     // fprintf(fp,"Accumulated Package Throttled Time : %.6fs\n",acc_pkg_throttled_time);
   }
-
+  
+  for(int i=0; i<20; i++){
+  int fd2 = open_msr(i);
+  result=read_msr(fd2, MSR_PP0_ENERGY_STATUS);
+  pp0_before=(double)result * energy_units;
+  printf("core %d raw=%d, result=%f\n", i, result, pp0_before);
+  }
   result=read_msr(fd,MSR_PP0_ENERGY_STATUS);
   pp0_before=(double)result*energy_units;
-  // fprintf(fp,"PowerPlane0 (core) for core %d energy before: %.6fJ\n",core,pp0_before);
+  fprintf(fp,"PowerPlane0 (core) for core %d energy before: %.6fJ\n",core,pp0_before);
 
-  result=read_msr(fd,MSR_PP0_POLICY);
-  int pp0_policy=(int)result&0x001f;
-  // fprintf(fp,"PowerPlane0 (core) for core %d policy: %d\n",core,pp0_policy);
+  if(cpu_model != CPU_SKYLAKEX){
+    result=read_msr(fd,MSR_PP0_POLICY);
+    int pp0_policy=(int)result&0x001f;
+    // fprintf(fp,"PowerPlane0 (core) for core %d policy: %d\n",core,pp0_policy);
+  }
 
   /* only available on *Bridge-EP */
   if ((cpu_model==CPU_SANDYBRIDGE_EP) || (cpu_model==CPU_IVYBRIDGE_EP))
@@ -283,23 +296,32 @@ void rapl_before(FILE * fp,int core)
   }
 
   /* not available on *Bridge-EP */
-  if ((cpu_model==CPU_SANDYBRIDGE) || (cpu_model==CPU_IVYBRIDGE) ||
-  (cpu_model==CPU_HASWELL) || (cpu_model==CPU_WHISKEYLAKE)) {
-     result=read_msr(fd,MSR_PP1_ENERGY_STATUS);
+  switch(cpu_model){
+    case CPU_SANDYBRIDGE:
+    case CPU_IVYBRIDGE:
+    case CPU_HASWELL:
+    case CPU_WHISKEYLAKE:
+         result=read_msr(fd,MSR_PP1_ENERGY_STATUS);
      pp1_before=(double)result*energy_units;
      // fprintf(fp,"PowerPlane1 (on-core GPU if avail) before: %.6fJ\n",pp1_before);
      result=read_msr(fd,MSR_PP1_POLICY);
      int pp1_policy=(int)result&0x001f;
      //fprintf(fp,"PowerPlane1 (on-core GPU if avail) %d policy: %d\n",core,pp1_policy);
+     break;
   }
 
   /* Despite documentation saying otherwise, it looks like */
   /* You can get DRAM readings on regular Haswell          */
-  if ((cpu_model==CPU_SANDYBRIDGE_EP) || (cpu_model==CPU_IVYBRIDGE_EP) ||
-  (cpu_model==CPU_HASWELL)  || (cpu_model==CPU_WHISKEYLAKE)) {
+  switch(cpu_model){
+    case CPU_SANDYBRIDGE:
+    case CPU_IVYBRIDGE:
+    case CPU_SKYLAKEX:
+    case CPU_HASWELL:
+    case CPU_WHISKEYLAKE:
      result=read_msr(fd,MSR_DRAM_ENERGY_STATUS);
      dram_before=(double)result*energy_units;
      // fprintf(fp,"DRAM energy before: %.6fJ\n",dram_before);
+     break;
   }
 
 }
@@ -323,22 +345,31 @@ void rapl_after(FILE * fp , int core)
 
 
   /* not available on SandyBridge-EP */
-  if ((cpu_model==CPU_SANDYBRIDGE) || (cpu_model==CPU_IVYBRIDGE) ||
-  (cpu_model==CPU_HASWELL)  || (cpu_model==CPU_WHISKEYLAKE)) {
-     result=read_msr(fd,MSR_PP1_ENERGY_STATUS);
-     pp1_after=(double)result*energy_units;
-     fprintf(fp,"%.18f, ",pp1_after-pp1_before);     // GPU
+  switch(cpu_model){
+    case CPU_SANDYBRIDGE:
+    case CPU_IVYBRIDGE:
+    case CPU_HASWELL:
+    case CPU_WHISKEYLAKE:
+      result=read_msr(fd,MSR_PP1_ENERGY_STATUS);
+      pp1_after=(double)result*energy_units;
+      fprintf(fp,"%.18f, ",pp1_after-pp1_before);     // GPU
+      break;
+    default: 
+      fprintf(fp," , ");
   }
-  else
-    fprintf(fp," , ");
 
-  if ((cpu_model==CPU_SANDYBRIDGE_EP) || (cpu_model==CPU_IVYBRIDGE_EP) ||
-  (cpu_model==CPU_HASWELL  || (cpu_model==CPU_WHISKEYLAKE))) {
-     result=read_msr(fd,MSR_DRAM_ENERGY_STATUS);
-     dram_after=(double)result*energy_units;
-     fprintf(fp,"%.18f, ",dram_after-dram_before);     // DRAM
+  switch(cpu_model){
+    case CPU_SANDYBRIDGE:
+    case CPU_IVYBRIDGE:
+    case CPU_HASWELL:
+    case CPU_WHISKEYLAKE:
+    case CPU_SKYLAKEX:
+      result=read_msr(fd,MSR_DRAM_ENERGY_STATUS);
+      dram_after=(double)result*energy_units;
+      fprintf(fp,"%.18f, ",dram_after-dram_before);     // DRAM
+      break;
+    default: 
+      fprintf(fp," , ");  
   }
-  else
-    fprintf(fp," , ");  
 
 }
