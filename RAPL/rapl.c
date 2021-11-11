@@ -41,6 +41,7 @@ long long read_msr(int fd, int which) {
 
   if (pread(fd, &data, sizeof data, which) != sizeof data) {
     perror("rdmsr:pread");
+    printf("Canot read MSR info %d\n", which);
     exit(127);
   }
 
