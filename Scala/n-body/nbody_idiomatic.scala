@@ -10,15 +10,15 @@ import math._
 object nbody {
   def main(args: Array[String]) = {
     val iterations = args(0).toInt
+    run(iterations)
   }
-
+  
   def run(iterations: Int): Unit = {
     val system = new JovianSystem()
     def showSystemEnergy() =
       println(f"${system.energy}%.9f")
-
     showSystemEnergy()
-    for (_ <- 0 until iterations) system.advance(0.01)
+    for (i <- 0 until iterations) system.advance(0.01)
     showSystemEnergy()
   }
 }
