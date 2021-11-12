@@ -136,7 +136,7 @@ class GmpInteger {
    // Non public stuff
    
    static {
-      System.loadLibrary("jgmplib");
+      System.loadLibrary("jgmp");
    }
    private long pointer;
    
