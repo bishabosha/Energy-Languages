@@ -101,8 +101,11 @@ public class pidigits {
    }
       
    public static void main(String[] args) {
-      pidigits m = new pidigits(Integer.parseInt(args[0]));
-      m.pidigits();
+      run(Integer.parseInt(args[0]));
+   }
+
+   public static void run(int n){
+      new pidigits(n).pidigits();
    }
 }
 

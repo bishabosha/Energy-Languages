@@ -19,7 +19,9 @@ public class spectralnorm
     {
         int n = 1000;
         if (args.length > 0) n = Integer.parseInt (args[0]);
-        
+        run(n);
+    }
+    public static void run(int n){
         System.out.println (formatter.format (spectralnormGame (n)) );
     }
     

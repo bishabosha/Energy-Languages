@@ -36,6 +36,10 @@ public class fasta {
         if (args.length > 0) {
             n = Integer.parseInt(args[0]);
         }
+        run(n);
+    }
+
+    public static void run(int n){
         for (int i = 0; i < WORKERS.length; i++) {
             WORKERS[i] = new NucleotideSelector();
             WORKERS[i].setDaemon(true);
@@ -111,7 +115,7 @@ public class fasta {
             last = (last * IA + IC) % IM;
             buffer.randoms[i] = last * ONE_OVER_IM;
         }
-        WORKERS[eincrementAndGet() % WORKERS.length].put(buffer);
+        WORKERS[OUT.incrementAndGet() % WORKERS.length].put(buffer);
     }
 
     private static void bufferFillRandom(OutputStream writer

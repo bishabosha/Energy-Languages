@@ -12,43 +12,49 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class revcomp
 {
-   private static final byte[] map = new byte[256];      
    private static final int CHUNK_SIZE = 1024 * 1024 * 16;
    private static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
-   private static final ExecutorService service = Executors.newFixedThreadPool(NUMBER_OF_CORES);
-   private static final List<byte[]> list = Collections.synchronizedList(new ArrayList<byte[]>());
+   private static ExecutorService service;
+   private static List<byte[]> list;
+   private static byte[] map;     
 
-   static {
-      for (int i = 0; i < map.length; i++) {
-         map[i] = (byte) i;
-      }
-       map['t'] = map['T'] = 'A';
-       map['a'] = map['A'] = 'T';
-       map['g'] = map['G'] = 'C';
-       map['c'] = map['C'] = 'G';
-       map['v'] = map['V'] = 'B';
-       map['h'] = map['H'] = 'D';
-       map['r'] = map['R'] = 'Y';
-       map['m'] = map['M'] = 'K';
-       map['y'] = map['Y'] = 'R';
-       map['k'] = map['K'] = 'M';
-       map['b'] = map['B'] = 'V';
-       map['d'] = map['D'] = 'H';
-       map['u'] = map['U'] = 'A';
+   public static void main(String[] args) throws Exception{
+      run(System.in);
    }
+   public static void run(java.io.InputStream inputStream) throws Exception{
+      service = Executors.newFixedThreadPool(NUMBER_OF_CORES);
+      list = Collections.synchronizedList(new ArrayList<byte[]>());
+      map = new byte[256];
+      {
+         for (int i = 0; i < map.length; i++) {
+            map[i] = (byte) i;
+         }
+          map['t'] = map['T'] = 'A';
+          map['a'] = map['A'] = 'T';
+          map['g'] = map['G'] = 'C';
+          map['c'] = map['C'] = 'G';
+          map['v'] = map['V'] = 'B';
+          map['h'] = map['H'] = 'D';
+          map['r'] = map['R'] = 'Y';
+          map['m'] = map['M'] = 'K';
+          map['y'] = map['Y'] = 'R';
+          map['k'] = map['K'] = 'M';
+          map['b'] = map['B'] = 'V';
+          map['d'] = map['D'] = 'H';
+          map['u'] = map['U'] = 'A';
+      }
 
-   public static void main(String[] args) throws IOException
-   {
       int read;
       byte[] buffer;
       Finder lastFinder = null; 
       
       do {
          buffer = new byte[CHUNK_SIZE];
-         read = System.in.read(buffer);
+         read = inputStream.read(buffer);
          list.add(buffer);
 
          Finder finder = new Finder(buffer, read, lastFinder);
@@ -62,6 +68,7 @@ public class revcomp
       service.execute(mapper);
 
       service.shutdown();
+      service.awaitTermination(120L, TimeUnit.SECONDS);
    }
 
    private static final class Status

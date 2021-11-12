@@ -1,18 +1,75 @@
-compile:
+# Info
+benchmarkName = pidigits
+mainClass = pidigits
+input-test = 30
+input-benchmark = 10000
+input-jvm-runner= 10000
+warmup-iterations=5
+warmup-measure=true
+output = 
+
+# Config
+mode = 
+configName = Java
+
+# Filenames
+fast      = pidigits.java
+runner    = JvmRunner.java
+
+default    = ${fast}
+impl-file  = ${default} 
+
+# Environment
+sRAPLPath  = ../../Scala/sRAPL
+sRAPLClassPath = ${SCALA_HOME}/lib/scala-library-2.13.6.jar:${SCALA_HOME}/lib/scala3-library_3-3.1.0.jar:${sRAPLPath}/sRAPL.jar:${sRAPLPath}/jRAPL-1.0.jar 
+javaPath  = /usr/bin/java -cp .:../fastutil-7.0.13.jar
+javacPath = /usr/bin/javac -cp .:../fastutil-7.0.13.jar
+jvmOpts   = -Djava.library.path=${shell pwd}
+
+# Logic (do not edit)
+ifeq ($(mode),idiomatic)
+  	impl-file=${idiomatic}
+endif
+
+before-compile:
 	g++ -c -fPIC -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux GmpInteger.c -o GmpInteger.o
 	g++ -shared -fPIC -o libjgmp.so GmpInteger.o -lc -lgmp
-	cp pidigits.java-2.java pidigits.java
-	javac -d .  pidigits.java
-xmeasure:
-	sudo modprobe msr
-	sudo ../../RAPL/main "/usr/bin/java -Djava.library.path=Include/java  pidigits 10000" Java pidigits
+      
+
+compile:
+	make before-compile
+	${javacPath}:${sRAPLClassPath} -d . ${impl-file} ${runner}
+
+test:
+	${javaPath} ${jvmOpts} ${mainClass} ${input-test} ${output} | diff test-output.txt -
 
 run:
-	/usr/bin/java -Djava.library.path=${PWD}  pidigits 10000
+	${javaPath} ${jvmOpts} ${mainClass} ${input-benchmark} ${output}
 
+measure:
+	sudo modprobe msr
+	sudo ../../RAPL/main "${javaPath} -Djava.library.path=${shell pwd} ${mainClass} ${input-benchmark} ${output}" ${configName} ${benchmarkName}
+
+measureWithWarmup:
+	sudo modprobe msr
+	sudo ${javaPath}:${sRAPLClassPath} \
+   ${jvmOpts} \
+   JvmRunner ${input-jvm-runner} \
+   --label ${benchmarkName} \
+   --measure-warmup ${warmup-measure} \
+   --warmup-iterations ${warmup-iterations} \
+   --output ../${configName}-warmedUp.csv \
+   ${output} 
+ 
 mem:
-	/usr/bin/time -v /usr/bin/java -Djava.library.path=Include/java  pidigits 10000
+	/usr/bin/time \
+   --format="${benchmarkName}, %e, %P, %M" \
+   --output=../${configName}-memory.csv \
+   --append \
+   ${javaPath} ${jvmOpts} ${mainClass} ${input-benchmark} ${output}
 
 valgrind:
-	valgrind --tool=massif --stacks=yes /usr/bin/java -Djava.library.path=Include/java  pidigits 10000
+	valgrind --tool=massif --stacks=yes ${javaPath} ${mainClass} ${input-benchmark} ${output}
 
+clean:
+	rm -rf *.class

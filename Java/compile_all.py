@@ -4,6 +4,8 @@ from lazyme.string import color_print
 
 path = '.'
 action = 'compile'
+arguments = ''
+supportedCommands = ['compile', 'run', 'test', 'measure', 'measureWithWarmup', 'mem', 'valgrind', 'clean']
 
 def file_exists(file_path):
     if not file_path:
@@ -13,15 +15,14 @@ def file_exists(file_path):
 
 def main():
   for root, dirs, files in os.walk(path):
-    print('Checking ' + root)
     makefile = os.path.join(root, "Makefile")
     if file_exists(makefile):
-      cmd = 'cd ' + root + '; make ' + action
-      #cmd = 'ls -la'
+      print('Checking ' + root)
+      cmd = 'cd ' + root + '; make ' + action + ' ' + arguments
       pipes = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
       std_out, std_err = pipes.communicate()
       
-      if (action == 'compile') | (action == 'run'):
+      if action in ['compile', 'run', 'test']:
         if pipes.returncode != 0:
           # an error happened!
           err_msg = "%s. Code: %s" % (std_err.strip(), pipes.returncode)
@@ -38,14 +39,19 @@ def main():
         call(['sleep', '5'])
 
 if __name__ == '__main__':
-  if len(sys.argv) == 2:
+  if len(sys.argv) >= 2:
     act = sys.argv[1]
-    if (act == 'compile') | (act == 'run') | (act == 'clean') | (act == 'measure'):
+    if act in supportedCommands:
       color_print('Performing \"' + act + '\" action...', color='yellow', bold=True)
       action = act
+      arguments =  ' '.join(map(str,sys.argv[2:]))
+      if arguments:
+        color_print('Passed arguments: ' + arguments, color='yellow', bold=True)
     else:
-      color_print('Error: Unrecognized action \"' + act + '\"', color='red')
-      sys.exit(1)
+      color_print('Performing \"compile\" action...', color='yellow', bold=True)
+      arguments =  ' '.join(map(str,sys.argv[1:]))
+      if arguments:
+        color_print('Passed arguments: ' + str(arguments), color='yellow', bold=True)
   else:
     color_print('Performing \"compile\" action...', color='yellow', bold=True)
     action = 'compile'

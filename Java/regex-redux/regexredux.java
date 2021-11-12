@@ -18,11 +18,14 @@ import static java.util.stream.Collectors.*;
 public class regexredux {
 
   public static void main(String[] args) throws IOException {
+    run(System.in);
+  }
+  public static void run(java.io.InputStream inputStream) throws IOException{
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     {
         byte[] buf = new byte[65536];
         int count;
-        while ((count = System.in.read(buf)) > 0) {
+        while ((count = inputStream.read(buf)) > 0) {
             baos.write(buf, 0, count);
         }
     }

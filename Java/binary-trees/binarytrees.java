@@ -14,14 +14,18 @@ import java.util.concurrent.TimeUnit;
 public class binarytrees {
 
     private static final int MIN_DEPTH = 4;
-    private static final ExecutorService EXECUTOR_SERVICE = 
-        Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private static ExecutorService EXECUTOR_SERVICE;
 
     public static void main(final String[] args) throws Exception {
         int n = 0;
         if (0 < args.length) {
             n = Integer.parseInt(args[0]);
         }
+        run(n);
+    }
+
+    public static void run(int n) throws Exception {
+        EXECUTOR_SERVICE = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         final int maxDepth = n < (MIN_DEPTH + 2) ? MIN_DEPTH + 2 : n;
         final int stretchDepth = maxDepth + 1;

@@ -79,6 +79,13 @@ extension (diff: EnergyDiff)
     values.mkString(", ")
   }
 
+
+object Runner{
+  def measureEnergyConsumption(config: Settings, fn: Runnable): Unit  = {
+    sRAPL.measureEnergyConsumption(() => fn.run())(using config)
+  }
+}
+
 case class Settings(
     resultFile: Option[File] = None,
     label: String = "benchmark",
@@ -111,6 +118,7 @@ case class WarmupSettings(
 }
 
 object Settings {
+  def parseArray(args: Array[String]): Settings = parse(args.toSeq)
   def parse(args: Seq[String]): Settings = {
     args
       .collect {

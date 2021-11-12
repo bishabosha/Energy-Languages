@@ -155,7 +155,10 @@ public class knucleotide {
     }
 
     public static void main(String[] args) throws Exception {
-        byte[] sequence = read(System.in);
+        run(System.in);
+    }
+    public static void run(java.io.InputStream inputStream) throws Exception{
+        byte[] sequence = read(inputStream);
 
         ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime()
                 .availableProcessors());

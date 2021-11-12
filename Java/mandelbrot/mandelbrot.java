@@ -54,7 +54,9 @@ public final class mandelbrot {
    public static void main(String[] args) throws Exception {
       int N=6000;
       if (args.length>=1) N=Integer.parseInt(args[0]);
-
+      run(N);
+   }
+   public static void run(int N) throws Exception{
       Crb=new double[N+7]; Cib=new double[N+7];
       double invN=2.0/N; for(int i=0;i<N;i++){ Cib[i]=i*invN-1.0; Crb[i]=i*invN-1.5; }
       yCt=new AtomicInteger();

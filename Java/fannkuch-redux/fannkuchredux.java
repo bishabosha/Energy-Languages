@@ -142,7 +142,10 @@ public final class fannkuchredux implements Runnable
             printResult( n, 0, 0 );
             return;
         }
-
+        run(n);
+    }
+    public static void run(int n0){
+        n = n0;
         Fact = new int[n+1];
         Fact[0] = 1;
         for ( int i=1; i<Fact.length; ++i ) {
@@ -150,7 +153,7 @@ public final class fannkuchredux implements Runnable
         }
         
         CHUNKSZ = (Fact[n] + NCHUNKS - 1) / NCHUNKS;
-	NTASKS = (Fact[n] + CHUNKSZ - 1) / CHUNKSZ;
+	    NTASKS = (Fact[n] + CHUNKSZ - 1) / CHUNKSZ;
         maxFlips = new int[NTASKS];
         chkSums  = new int[NTASKS];
         taskId = new AtomicInteger(0);
