@@ -146,6 +146,7 @@ case class Filenames(
 )
 
 def template(ctx: Config): String = {
+  val tab  = '\t'
   import ctx._
   s"""# Info
   |benchmarkName = ${benchmarkName}
@@ -193,8 +194,8 @@ def template(ctx: Config): String = {
   |	sudo ../../RAPL/main "$${scalaPath} $${mainClass} $${input-benchmark} $${output}" $${configName} $${benchmarkName}
   |
   |measureWithWarmup:
-	|${'\t'}sudo modprobe msr
-	|${'\t'}sudo $${scalaPath} $${scalaClasspath} \\
+	|${tab}sudo modprobe msr
+	|${tab}sudo $${scalaPath} $${scalaClasspath} \\
   |   -cp $${sRAPLPath}/sRAPL.jar \\
   |   -cp $${sRAPLPath}/jRAPL-1.0.jar \\
   |   run $${input-jvm-runner} \\
@@ -205,7 +206,11 @@ def template(ctx: Config): String = {
 	|   $${output} 
   | 
   |mem:
-  |	/usr/bin/time -v $${scalaPath} $${mainClass} $${input-benchmark} $${output}
+  |${tab}/usr/bin/time \\
+  |   --format="$${benchmarkName}, %e, %P, %M" \\
+  |   --output=../$${configName}-memory.csv \\
+  |   --append \\
+  |   $${scalaPath} $${mainClass} $${input-benchmark} $${output}
   |
   |valgrind:
   |	valgrind --tool=massif --stacks=yes $${scalaPath} $${mainClass} $${input-benchmark} $${output}

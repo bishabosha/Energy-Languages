@@ -56,7 +56,11 @@ measureWithWarmup:
    ${output} 
  
 mem:
-	/usr/bin/time -v ${scalaPath} ${mainClass} ${input-benchmark} ${output}
+	/usr/bin/time \
+   --format="${benchmarkName}, %e, %P, %M" \
+   --output=../${configName}-memory.csv \
+   --append \
+   ${scalaPath} ${mainClass} ${input-benchmark} ${output}
 
 valgrind:
 	valgrind --tool=massif --stacks=yes ${scalaPath} ${mainClass} ${input-benchmark} ${output}
