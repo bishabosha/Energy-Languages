@@ -1,8 +1,13 @@
-import java.io.FileOutputStream
-import java.io.DataOutputStream
-@main def normalize(path: String): Unit = {
+import java.io._
+import java.nio.file.Paths
+
+@main def normalize(path: String, _outputDir: String): Unit = {
+  val inputFile = new File(path)
+  val outputDir = new File(_outputDir)
+  outputDir.mkdirs
+
   io.Source
-    .fromFile(path)
+    .fromFile(inputFile)
     .getLines
     .map(_.replace(";", ",").split(",").map(_.trim).toSeq)
     .map(ResultRaw.fromSeq)
@@ -19,7 +24,12 @@ import java.io.DataOutputStream
     .groupMap(_._1)(_._2)
     .foreach { case (aggregation, results) =>
       val out =
-        FileOutputStream(s"${path.stripSuffix(".csv")}-$aggregation.csv")
+        FileOutputStream(
+          Paths.get(
+            outputDir.getAbsolutePath,
+            s"${inputFile.getName.stripSuffix(".csv")}-$aggregation.csv"
+          ).toFile
+        )
       def writeLine(str: String) = out.write((str + "\n").getBytes)
       writeLine("benchmark-name,total (J),CPU (J),GPU (J), DRAM (J), time (ms)")
       results.toSeq.sortBy(_.benchmarkName).map(_.toCSV).foreach(writeLine)
@@ -35,9 +45,11 @@ case class ResultRaw(
     dram: Double,
     time: Double
 ) {
-  def toCSV ={
-    (benchmarkName :: List(total, cpu, gpu, dram, time).map(String.format("%.3f", _)))
-    .mkString(",")
+  def toCSV = {
+    (benchmarkName :: List(total, cpu, gpu, dram, time).map(
+      String.format("%.3f", _)
+    ))
+      .mkString(",")
   }
 }
 
