@@ -14,7 +14,7 @@ configName = Scala
 
 # Filenames
 fast      = BinaryTrees.scala
-idiomatic = BinaryTrees.scala
+idiomatic = BinaryTrees_idiomatic.scala
 runner    = JvmRunner.scala
 
 default    = ${fast}

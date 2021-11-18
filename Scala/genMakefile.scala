@@ -28,7 +28,7 @@ val configs = List(
     inputs = Inputs(test = "10", benchmark = "21"),
     files = Filenames(
       fast = "BinaryTrees.scala",
-      idiomatic = "BinaryTrees.scala"
+      idiomatic = "BinaryTrees_idiomatic.scala"
     )
   ),
   Config(
